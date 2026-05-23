@@ -1,0 +1,1 @@
+{"id":"velocity-prefix-auth","name":"VelocityPrefixAuth","version":"1.0.0","description":"Pre-auth identity normalizer for cracked/premium name collision prevention","authors":["gamer0kayf1n3"],"dependencies":[],"main":"com.gamer0kayf1n3.velocity_prefix_auth.VelocityPrefixAuth"}
