@@ -11,8 +11,6 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import com.gamer0kayf1n3.velocity_prefix_auth.AuthListener;
-
 
 @Plugin(
         id = "velocity-prefix-auth",
