@@ -19,6 +19,7 @@ dependencies {
     annotationProcessor 'com.velocitypowered:velocity-api:3.5.0-SNAPSHOT'
 
     implementation 'org.xerial:sqlite-jdbc:3.46.1.0'
+    implementation 'io.netty:netty-all:4.1.104.Final'
 
     compileOnly 'org.jetbrains:annotations:26.0.2'
 }
