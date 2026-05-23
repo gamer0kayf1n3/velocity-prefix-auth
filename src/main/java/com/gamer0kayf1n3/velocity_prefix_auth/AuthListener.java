@@ -79,7 +79,7 @@ public class AuthListener {
         String username = event.getUsername();
         PlayerInfo premiumInfo = checkPremium(username);
 
-        boolean isPremium = premiumInfo != null;
+        boolean isPremium = premiumInfo != null && premiumInfo.uuid != null;
 
         logger.info("Checked premium status for player {}: {} {}", 
             username, 
