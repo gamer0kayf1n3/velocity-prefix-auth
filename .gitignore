@@ -17,3 +17,5 @@ Thumbs.db
 # Local run data (optional but recommended)
 plugins/
 run/
+
+bin/
