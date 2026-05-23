@@ -50,7 +50,7 @@ public class AuthListener {
         }
 
         PlayerInfo apiResult = MojangApiClient.fetchPlayerData(username);
-
+        
         if (apiResult != null) {
             nameCache.put(username, apiResult);
             try {
@@ -63,6 +63,7 @@ public class AuthListener {
         }
 
         PlayerInfo notPremium = new PlayerInfo(null, username, System.currentTimeMillis() + /* TTL */ 3600_000L);
+        notPremium = notPremium.withDataSource("api");
         nameCache.put(username, notPremium);
         try {
             nameDatabase.savePlayerName(notPremium);
