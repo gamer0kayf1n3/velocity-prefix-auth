@@ -122,6 +122,8 @@ public class AuthListener {
         String username = event.getUsername();
         PlayerInfo premiumInfo = checkPremium(username);
 
+        if (username.startsWith(".")) return; // never mess with floodgate players!
+
         boolean isPremium = premiumInfo != null && premiumInfo.uuid != null;
 
         logger.info("Checked premium status for player {}: {} {}",
@@ -172,10 +174,13 @@ public class AuthListener {
 
     @Subscribe(priority = Short.MAX_VALUE)
     public void onGameProfileRequest(GameProfileRequestEvent event) {
-        pendingPremiumAuth.remove(event.getGameProfile().getName().toLowerCase());
-        
+
         GameProfile originalProfile = event.getGameProfile();
         String originalName = originalProfile.getName();
+
+        String pPAcheckString = originalName.toLowerCase();
+        if (pendingPremiumAuth.contains(pPAcheckString)) pendingPremiumAuth.remove(pPAcheckString);
+
 
         // If the connection is online-mode then they are a premium player and we should not rewrite their username or UUID.
         if (event.isOnlineMode()) {
