@@ -218,8 +218,8 @@ public class AuthListener {
                 buf.markReaderIndex();
                 try {
                     String username = parseLoginStartUsername(buf);
-                    logger.info("InboundPacketRewriter: parsed username={}, expectAfterKick={}", username, playersToExpectAfterKick);
                     if (username == null && REVEAL_HEX_ON_PARSE_FAILURE) {
+                        logger.info("InboundPacketRewriter: parsed username={}, expectAfterKick={}", username, playersToExpectAfterKick);
                         buf.resetReaderIndex();
                         int bytesToShow = Math.min(32, buf.readableBytes());
                         byte[] bytes = new byte[bytesToShow];
