@@ -29,6 +29,9 @@ public class PrefixChannelInitializer extends ChannelInitializer<Channel> {
         if (ch.pipeline().get("frame-decoder") != null) {
             ch.pipeline().addAfter("frame-decoder", "prefix-username-rewriter",
                     new AuthListener.InboundPacketRewriter(playersToExpectAfterKick, logger));
-        }
+                    //logger.info("[prefix-debug] Added username rewriter after frame-decoder");
+        }  else {
+            throw new IllegalStateException("Could not find frame-decoder in pipeline! This plugin may be incompatible with this version of Velocity. Please report this to the developer.");
+    }
     }
 }

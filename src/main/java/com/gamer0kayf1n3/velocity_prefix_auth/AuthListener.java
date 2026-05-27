@@ -123,7 +123,7 @@ public class AuthListener {
         PlayerInfo premiumInfo = checkPremium(username);
 
         if (username.startsWith(".")) return; // never mess with floodgate players!
-
+        
         boolean isPremium = premiumInfo != null && premiumInfo.uuid != null;
 
         logger.info("Checked premium status for player {}: {} {}",
@@ -158,8 +158,16 @@ public class AuthListener {
                 logger.error("Failed to attach channel close listener for {}", username, e);
             }
 
-        } else {
-            playersToExpectAfterKick.add(username.toLowerCase());
+        }
+    }
+    @Subscribe(priority = Short.MIN_VALUE)
+    public void onPreLoginLowest(PreLoginEvent event) {
+        String username = event.getUsername();
+        PlayerInfo premiumInfo = checkPremium(username);
+
+        boolean isPremium = premiumInfo != null && premiumInfo.uuid != null;
+        if (!isPremium && !username.startsWith(".") && !username.startsWith(c_)) {  
+            playersToExpectAfterKick.add(c_ + username.toLowerCase());
 
             String template = "<light_purple>[velocity-prefix-auth] Detected a cracked player! Your username will be rewritten from <name> to <newname> to prevent name collisions with future premium players. Please rejoin!</light_purple>";
             Component kickMessage = MiniMessage.miniMessage().deserialize(
@@ -167,17 +175,17 @@ public class AuthListener {
                     Placeholder.parsed("name", username),
                     Placeholder.parsed("newname", String.format("%.16s", c_ + username))
             );
-
+            logger.info("Player {} is not premium, denying login with kick message about username rewriting", username);
             event.setResult(PreLoginEvent.PreLoginComponentResult.denied(kickMessage));
         }
     }
-
+    
     @Subscribe(priority = Short.MAX_VALUE)
     public void onGameProfileRequest(GameProfileRequestEvent event) {
 
         GameProfile originalProfile = event.getGameProfile();
         String originalName = originalProfile.getName();
-
+        
         String pPAcheckString = originalName.toLowerCase();
         if (pendingPremiumAuth.contains(pPAcheckString)) pendingPremiumAuth.remove(pPAcheckString);
 
