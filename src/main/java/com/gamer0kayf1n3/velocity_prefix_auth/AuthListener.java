@@ -167,7 +167,7 @@ public class AuthListener {
 
         boolean isPremium = premiumInfo != null && premiumInfo.uuid != null;
         if (!isPremium && !username.startsWith(".") && !username.startsWith(c_)) {  
-            playersToExpectAfterKick.add(c_ + username.toLowerCase());
+            playersToExpectAfterKick.add(username.toLowerCase());
 
             String template = "<light_purple>[velocity-prefix-auth] Detected a cracked player! Your username will be rewritten from <name> to <newname> to prevent name collisions with future premium players. Please rejoin!</light_purple>";
             Component kickMessage = MiniMessage.miniMessage().deserialize(
@@ -243,6 +243,7 @@ public class AuthListener {
                         String rewrittenUsername = String.format("%.16s", c_ + username);
                         buf.resetReaderIndex();
                         ByteBuf rewritten = rewriteLoginStartPacket(ctx, buf, rewrittenUsername);
+                        logger.info("Rewrote Login Start packet for player {} to {}, because they were expected after kick", username, rewrittenUsername);
                         ReferenceCountUtil.release(msg);
                         super.channelRead(ctx, rewritten);
                         return;
@@ -288,7 +289,7 @@ public class AuthListener {
             readVarInt(original); // skip packet ID
             int usernameLength = readVarInt(original);
             original.skipBytes(usernameLength); // skip original username
-
+            
             ByteBuf packet = ctx.alloc().buffer();
             writeVarInt(packet, 0x00); // packet ID
             byte[] usernameBytes = newUsername.getBytes(StandardCharsets.UTF_8);
