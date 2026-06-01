@@ -13,14 +13,14 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
-import com.gamer0kayf1n3.velocity_prefix_auth.MojangApiClient.PlayerInfo;
-
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.nio.charset.StandardCharsets;
 
 import static com.gamer0kayf1n3.velocity_prefix_auth.MojangApiClient.PlayerInfo;
+import com.gamer0kayf1n3.velocity_prefix_auth.FloodgateDetection;
+import com.gamer0kayf1n3.velocity_prefix_auth.MojangApiClient.PlayerInfo;
 
 import org.slf4j.Logger;
 import java.sql.SQLException;
@@ -120,9 +120,10 @@ public class AuthListener {
     public void onPreLogin(PreLoginEvent event) {
 
         String username = event.getUsername();
+        UUID uuid = event.getUniqueId();
         PlayerInfo premiumInfo = checkPremium(username);
 
-        if (username.startsWith(".")) return; // never mess with floodgate players!
+        if (FloodgateDetection.isFloodgatePlayer(uuid)) return; // never mess with floodgate players!
         
         boolean isPremium = premiumInfo != null && premiumInfo.uuid != null;
 
@@ -163,10 +164,13 @@ public class AuthListener {
     @Subscribe(priority = Short.MIN_VALUE)
     public void onPreLoginLowest(PreLoginEvent event) {
         String username = event.getUsername();
+        UUID uuid = event.getUniqueId();
+
         PlayerInfo premiumInfo = checkPremium(username);
 
         boolean isPremium = premiumInfo != null && premiumInfo.uuid != null;
-        if (!isPremium && !username.startsWith(".") && !username.startsWith(c_)) {  
+        boolean isFloodgate = FloodgateDetection.isFloodgatePlayer(uuid);
+        if (!isPremium && !isFloodgate && !username.startsWith(c_)) {  
             playersToExpectAfterKick.add(username.toLowerCase());
 
             String template = "<light_purple>[velocity-prefix-auth] Detected a cracked player! Your username will be rewritten from <name> to <newname> to prevent name collisions with future premium players. Please rejoin!</light_purple>";
