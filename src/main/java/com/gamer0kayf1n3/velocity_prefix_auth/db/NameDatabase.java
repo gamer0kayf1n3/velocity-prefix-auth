@@ -1,4 +1,4 @@
-package com.gamer0kayf1n3.velocity_prefix_auth;
+package com.gamer0kayf1n3.velocity_prefix_auth.db;
 
 import com.gamer0kayf1n3.velocity_prefix_auth.MojangApiClient.PlayerInfo;
 import java.sql.*;

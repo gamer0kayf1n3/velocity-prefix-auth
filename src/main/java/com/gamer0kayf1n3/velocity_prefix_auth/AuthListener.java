@@ -21,6 +21,8 @@ import java.nio.charset.StandardCharsets;
 import static com.gamer0kayf1n3.velocity_prefix_auth.MojangApiClient.PlayerInfo;
 import com.gamer0kayf1n3.velocity_prefix_auth.FloodgateDetection;
 import com.gamer0kayf1n3.velocity_prefix_auth.MojangApiClient.PlayerInfo;
+import com.gamer0kayf1n3.velocity_prefix_auth.db.NameCache;
+import com.gamer0kayf1n3.velocity_prefix_auth.db.NameDatabase;
 
 import org.slf4j.Logger;
 import java.sql.SQLException;

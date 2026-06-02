@@ -1,4 +1,4 @@
-package com.gamer0kayf1n3.velocity_prefix_auth;
+package com.gamer0kayf1n3.velocity_prefix_auth.db;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
