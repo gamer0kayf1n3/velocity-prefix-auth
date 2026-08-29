@@ -10,16 +10,17 @@ public class FloodgateDetection {
     private static boolean floodgateChecked = false;
 
     public static boolean isFloodgatePlayer(UUID uuid) {
-
         if (!floodgateChecked) {
-            floodgateChecked = true;
             try {
                 Class<?> apiClass = Class.forName("org.geysermc.floodgate.api.FloodgateApi");
                 Method getInstance = apiClass.getMethod("getInstance");
-                
+
                 floodgateApi = getInstance.invoke(null);
-                if (floodgateApi != null) isFloodgatePlayerMethod = apiClass.getMethod("isFloodgatePlayer", UUID.class);
-            } 
+                if (floodgateApi != null) {
+                    isFloodgatePlayerMethod = apiClass.getMethod("isFloodgatePlayer", UUID.class);
+                    floodgateChecked = true;
+                }
+            }
             catch (Exception ignored) {}
         }
         if (floodgateApi == null || isFloodgatePlayerMethod == null) return false;
