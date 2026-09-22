@@ -32,6 +32,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.Channel;
 import io.netty.buffer.ByteBuf;
+import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
 
 import java.lang.invoke.MethodHandle;
@@ -46,15 +47,29 @@ public class AuthListener {
     private final Set<String> playersToExpectAfterKick;
 
     private static final String c_ = "c_";
+        private static final AttributeKey<Object> FLOODGATE_PLAYER_ATTRIBUTE =
+            AttributeKey.valueOf("floodgate-player");
 
+        private static final Class<?> LOGIN_INBOUND_CONNECTION;
     private static final MethodHandle DELEGATE_FIELD;
+        private static final java.lang.reflect.Field INITIAL_MINECRAFT_CONNECTION;
+        private static final java.lang.reflect.Field CHANNEL_FIELD;
     static {
         try {
-            Class<?> loginInbound = Class.forName("com.velocitypowered.proxy.connection.client.LoginInboundConnection");
+            LOGIN_INBOUND_CONNECTION = Class.forName(
+                "com.velocitypowered.proxy.connection.client.LoginInboundConnection");
+            Class<?> loginInbound = LOGIN_INBOUND_CONNECTION;
             Class<?> initialInbound = Class.forName("com.velocitypowered.proxy.connection.client.InitialInboundConnection");
             java.lang.reflect.Field delegateField = loginInbound.getDeclaredField("delegate");
             delegateField.setAccessible(true);
             DELEGATE_FIELD = MethodHandles.lookup().unreflectGetter(delegateField);
+
+            Class<?> minecraftConnection = Class.forName(
+                "com.velocitypowered.proxy.connection.MinecraftConnection");
+            INITIAL_MINECRAFT_CONNECTION = findFieldOfType(initialInbound, minecraftConnection);
+            INITIAL_MINECRAFT_CONNECTION.setAccessible(true);
+            CHANNEL_FIELD = findFieldOfType(minecraftConnection, Channel.class);
+            CHANNEL_FIELD.setAccessible(true);
         } catch (Throwable t) {
             throw new ExceptionInInitializerError(t);
         }
@@ -118,14 +133,49 @@ public class AuthListener {
         return null;
     }
 
+    private static java.lang.reflect.Field findFieldOfType(Class<?> owner, Class<?> type) {
+        for (java.lang.reflect.Field field : owner.getDeclaredFields()) {
+            if (field.getType() == type) {
+                return field;
+            }
+        }
+        throw new IllegalStateException("Unable to find field of type " + type.getName()
+                + " on " + owner.getName());
+    }
+
+    private Channel getConnectionChannel(InboundConnection connection) throws Throwable {
+        Object currentConnection = connection;
+        if (LOGIN_INBOUND_CONNECTION != null && LOGIN_INBOUND_CONNECTION.isInstance(currentConnection)) {
+            currentConnection = DELEGATE_FIELD.invoke(currentConnection);
+        }
+
+        Object minecraftConnection = INITIAL_MINECRAFT_CONNECTION.get(currentConnection);
+        return (Channel) CHANNEL_FIELD.get(minecraftConnection);
+    }
+
+    private boolean isFloodgateConnection(PreLoginEvent event) {
+        try {
+            Channel channel = getConnectionChannel(event.getConnection());
+            if (channel != null && channel.attr(FLOODGATE_PLAYER_ATTRIBUTE).get() != null) {
+                return true;
+            }
+        } catch (Throwable ignored) {
+            // fall back to UUID-based detection below
+        }
+
+        UUID uuid = event.getUniqueId();
+        return uuid != null && FloodgateDetection.isFloodgatePlayer(uuid);
+    }
+
     @Subscribe(priority = Short.MAX_VALUE)
     public void onPreLogin(PreLoginEvent event) {
 
         String username = event.getUsername();
-        UUID uuid = event.getUniqueId();
-        PlayerInfo premiumInfo = checkPremium(username);
+        if (isFloodgateConnection(event)) {
+            return; // never mess with floodgate players!
+        }
 
-        if (FloodgateDetection.isFloodgatePlayer(uuid)) return; // never mess with floodgate players!
+        PlayerInfo premiumInfo = checkPremium(username);
         
         boolean isPremium = premiumInfo != null && premiumInfo.uuid != null;
 
@@ -166,13 +216,15 @@ public class AuthListener {
     @Subscribe(priority = Short.MIN_VALUE)
     public void onPreLoginLowest(PreLoginEvent event) {
         String username = event.getUsername();
-        UUID uuid = event.getUniqueId();
+
+        if (isFloodgateConnection(event)) {
+            return; // never mess with floodgate players!
+        }
 
         PlayerInfo premiumInfo = checkPremium(username);
 
         boolean isPremium = premiumInfo != null && premiumInfo.uuid != null;
-        boolean isFloodgate = FloodgateDetection.isFloodgatePlayer(uuid);
-        if (!isPremium && !isFloodgate && !username.startsWith(c_)) {  
+        if (!isPremium && !username.startsWith(c_)) {
             playersToExpectAfterKick.add(username.toLowerCase());
 
             String template = "<light_purple>[velocity-prefix-auth] Detected a cracked player! Your username will be rewritten from <name> to <newname> to prevent name collisions with future premium players. Please rejoin!</light_purple>";
